@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 650" role="img" aria-labelledby="title desc">
+  <title id="title">ULIANA push-up concept scene</title>
+  <desc id="desc">A stylized articulated mannequin in a raised push-up position on a mat, with a phone and two sensing zones.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fbf8f2"/><stop offset="1" stop-color="#eadfd3"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#694c3b" flood-opacity=".16"/></filter>
+  </defs>
+  <rect width="960" height="650" fill="url(#bg)"/>
+  <ellipse cx="500" cy="500" rx="385" ry="92" fill="#c8b9aa" filter="url(#shadow)"/>
+  <ellipse cx="335" cy="444" rx="44" ry="20" fill="#c96d51" opacity=".75"/>
+  <ellipse cx="350" cy="495" rx="44" ry="20" fill="#c96d51" opacity=".55"/>
+  <g fill="none" stroke="#a9533e" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M400 318L600 338" stroke-width="76"/>
+    <path d="M410 330L350 400L335 444" stroke-width="30"/>
+    <path d="M410 355L370 435L350 495" stroke-width="28" opacity=".92"/>
+    <path d="M600 350L745 420L812 458" stroke-width="36"/>
+    <path d="M598 375L735 445L802 489" stroke-width="34" opacity=".92"/>
+  </g>
+  <g fill="#d98b72">
+    <circle cx="410" cy="330" r="18"/><circle cx="350" cy="400" r="17"/><circle cx="335" cy="444" r="16"/>
+    <circle cx="410" cy="355" r="18"/><circle cx="370" cy="435" r="17"/><circle cx="350" cy="495" r="16"/>
+    <circle cx="600" cy="350" r="20"/><circle cx="745" cy="420" r="18"/><circle cx="812" cy="458" r="16"/>
+  </g>
+  <circle cx="335" cy="298" r="47" fill="#b95f47"/>
+  <g transform="translate(185 315)">
+    <path d="M0 112L-42 210M0 112L45 210M0 112V12" fill="none" stroke="#30322f" stroke-width="10" stroke-linecap="round"/>
+    <rect x="-30" y="-30" width="60" height="110" rx="13" fill="#30322f" transform="rotate(5)"/>
+    <circle cx="-10" cy="-10" r="7" fill="#bba890"/>
+  </g>
+</svg>

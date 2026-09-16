@@ -1,0 +1,13 @@
+{
+  "samples": 121,
+  "minMeshY": 0.060100000351667404,
+  "armLengthError": 1.6653345369377348e-16,
+  "bodyAlignmentError": 4.440892098500626e-16,
+  "topElbowAngle": 162.56203496361746,
+  "bottomElbowAngle": 84.73430777776737,
+  "bottomFlare": 38.899693906166455,
+  "triangleCount": 18158,
+  "updateMilliseconds": 3.7494898677685953,
+  "maxProjectedExtent": 0.8400000000000013,
+  "geometryDrawGroups": 34
+}

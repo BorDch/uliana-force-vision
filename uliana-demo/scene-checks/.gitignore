@@ -1,0 +1,8 @@
+# Regenerable offline render intermediates; keep final images/movie and report.
+/frames/
+/animation.json
+/desktop-top.json
+/desktop-middle.json
+/desktop-bottom.json
+/mobile-top.json
+/mobile-bottom.json

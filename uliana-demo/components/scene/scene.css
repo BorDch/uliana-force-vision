@@ -1,0 +1,14 @@
+/* Scoped to the existing simulation. The landing-page layout is unchanged. */
+.scene-card:has(.uliana-studio) { background: #eee7dd; }
+.scene-viewport.uliana-studio { inset: 62px 0 34px; }
+.uliana-studio canvas { display: block; position: absolute; inset: 0; touch-action: pan-y pinch-zoom; }
+.uliana-studio canvas:focus-visible { outline: 2px solid #a86149; outline-offset: -6px; border-radius: 18px; }
+.studio-poster { width: 100%; height: 100%; object-fit: contain; display: block; }
+.studio-ready .studio-poster { visibility: hidden; }
+.uliana-studio:not(.studio-ready) canvas { visibility: hidden; }
+.scene-topbar:has(.scene-actions:only-child) { justify-content: flex-end; }
+.scene-actions button:disabled { opacity: .35; cursor: default; }
+@media (max-width: 700px) {
+  .scene-card:has(.uliana-studio) .scene-actions { flex-direction: row; }
+  .scene-viewport.uliana-studio { inset: 62px 0 34px; }
+}
