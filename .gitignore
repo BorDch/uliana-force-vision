@@ -37,7 +37,6 @@ data/raw/pushups/*
 !data/raw/pushups/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
-models/*.task
 models/*.tflite
 artifacts/real_video/*/
 data/annotations/*consent*
@@ -46,3 +45,5 @@ data/demo_sessions/
 .kokoro-cache/
 firmware/esp32_wifi_stream/config.h
 firmware/esp32_wifi_stream/.pio/
+artifacts/
+models/*.task
