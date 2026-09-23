@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "participant_id": "anon-p001",
+  "session_id": "session-fixture",
+  "experience_level": "beginner",
+  "camera_viewpoint": "unknown",
+  "exercise_variation": "standard_push_up",
+  "expected_repetitions": 1,
+  "intentionally_performed_condition": null,
+  "consent_status": "granted",
+  "hardware_configuration": {
+    "camera_id": "synthetic-fixture",
+    "pressure_sensor_id": "mat-fixture",
+    "video_fps": 30,
+    "pressure_sampling_rate_hz": 50
+  },
+  "notes": "Anonymized contract-validation fixture; not a real recording.",
+  "split": "development",
+  "test_fixture": true
+}

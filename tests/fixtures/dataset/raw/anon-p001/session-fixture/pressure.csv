@@ -1,0 +1,5 @@
+timestamp_ms,timestamp_source,sensor_id,channel_id,row,column,raw_value,calibrated_force_n,calibration_status,quality_flags
+0,device_clock,mat-fixture,cell_00,0,0,101,10.1,calibrated,
+20,device_clock,mat-fixture,cell_00,0,0,103,10.3,calibrated,
+0,device_clock,mat-fixture,cell_01,0,1,99,,uncalibrated,
+20,device_clock,mat-fixture,cell_01,0,1,98,,uncalibrated,
