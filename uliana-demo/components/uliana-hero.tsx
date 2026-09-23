@@ -1,104 +1,33 @@
 "use client";
 
-import { ArrowDown, Pause, Play, RotateCcw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowRight, CheckCircle2, Play } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { UlianaScene } from "@/components/uliana-scene";
+const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export function UlianaHero() {
-  const [available, setAvailable] = useState(false);
-  const [reduced, setReduced] = useState(false);
-  const [playing, setPlaying] = useState(false);
-  const [resetKey, setResetKey] = useState(0);
-
-  useEffect(() => {
-    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(preference.matches);
-    if (!preference.matches) setPlaying(true);
-    const handleChange = () => { setPlaying(!preference.matches); setReduced(preference.matches); };
-    preference.addEventListener("change", handleChange);
-    return () => preference.removeEventListener("change", handleChange);
-  }, []);
-
   return (
-    <section id="top" className="hero-shell" aria-labelledby="hero-title">
-      <header className="site-header">
-        <a className="brand" href="#top" aria-label="ULIANA home">
-          <span className="brand-mark" aria-hidden="true">U<span>·</span></span>
-          <span className="brand-name">ULIANA</span>
-        </a>
-        <div className="header-note">Skoltech Team 10</div>
-      </header>
-
-      <div className="hero-layout">
-        <div className="hero-copy">
-          <div className="eyebrow"><span /> Movement, made visible</div>
-          <h1 id="hero-title">See your movement.<br />Understand your load.</h1>
-          <p>
-            Video shows the movement. Localised hand signals add another view. ULIANA brings both into one recorded-session review.
-          </p>
+    <section id="top" className="consumer-hero" aria-labelledby="hero-title">
+      <div className="consumer-hero-copy" data-reveal>
+        <p className="section-kicker">ULIANA</p>
+        <h1 id="hero-title">Train alone.<br />Don’t review alone.</h1>
+        <p className="consumer-hero-lede">Turn one phone recording into a clear push-up review: see how many repetitions you completed, what went well, which exact repetition deserves attention, and what to focus on next.</p>
+        <div className="consumer-hero-actions">
+          <a className="landing-button landing-button-primary" href={`${base}/?screen=demo`}>Explore a sample review <ArrowRight aria-hidden="true" /></a>
+          <a className="landing-button landing-button-secondary" href="#pilot">Join the pilot</a>
         </div>
-
-        <div className="scene-column">
-          <div className="scene-card">
-            <div className="scene-topbar">
-              <TooltipProvider>
-                <div className="scene-actions">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="scene-icon-button"
-                        disabled={!available || reduced}
-                        onClick={() => setPlaying((value) => !value)}
-                        aria-label={playing ? "Pause movement" : "Play movement"}
-                      >
-                        {playing ? <Pause /> : <Play />}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{playing ? "Pause movement" : "Play movement"}</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="scene-icon-button"
-                        disabled={!available}
-                        onClick={() => setResetKey((value) => value + 1)}
-                        aria-label="Reset scene view"
-                      >
-                        <RotateCcw />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Reset view</TooltipContent>
-                  </Tooltip>
-                </div>
-              </TooltipProvider>
-            </div>
-
-            <UlianaScene playing={playing} resetKey={resetKey} onAvailable={setAvailable} />
-
-            <div className="drag-hint" aria-hidden="true" style={{ visibility: available ? 'visible' : 'hidden' }}>
-              <span className="drag-icon">↔</span> Drag to rotate
-            </div>
-          </div>
-          <p className="scene-caption">Product concept — simulated movement and sensor response.</p>
+        <p className="consumer-hero-caption">From a continuous recording to repetition-by-repetition feedback and progress you can follow.</p>
+      </div>
+      <div className="sample-window" aria-label="Prepared ULIANA sample review" data-reveal>
+        <div className="sample-window-bar"><span>Prepared sample</span><span>Camera review</span></div>
+        <div className="sample-video-wrap">
+          <video src={`${base}/demo/demo-annotated.mp4`} muted playsInline autoPlay loop preload="metadata" aria-label="Annotated sample push-up recording" />
+          <span className="sample-rep-badge"><Play aria-hidden="true" /> Rep 1 of 5</span>
         </div>
-
-        <div className="hero-actions">
-          <Button asChild size="lg" className="primary-cta">
-            <a href="#session-review">Review a demo session <ArrowDown aria-hidden="true" /></a>
-          </Button>
-          <Button asChild variant="ghost" size="lg" className="secondary-cta">
-            <a href="#problem">Why ULIANA</a>
-          </Button>
+        <div className="sample-summary">
+          <p>Your session summary</p><h2>One clear focus for your next session</h2>
+          <div className="sample-summary-row"><CheckCircle2 aria-hidden="true" /><span><b>What went well</b>No issue was detected in the available range-of-motion check.</span></div>
+          <a href={`${base}/?screen=demo`}>Watch repetition 1 <ArrowRight aria-hidden="true" /></a>
         </div>
-
-        <p className="hero-footnote">Recorded-video analysis · paired illustrative sensing</p>
       </div>
     </section>
   );

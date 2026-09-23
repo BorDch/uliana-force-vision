@@ -136,7 +136,8 @@ export function UlianaScene({ playing, resetKey, onAvailable }: Props) {
     };
     renderer.setSize(host.clientWidth,host.clientHeight,false);
     compose();studio.update(0);renderer.render(studio.scene,studio.camera);
-    setReady(true);onAvailable(true);
+    // Defer state updates so the effect body does not call setState synchronously.
+    queueMicrotask(() => { setReady(true); onAvailable(true); });
     return () => {
       disposed=true;stop();resize.disconnect();observer.disconnect();
       document.removeEventListener('visibilitychange',visibility);
@@ -150,6 +151,7 @@ export function UlianaScene({ playing, resetKey, onAvailable }: Props) {
   }, [onAvailable]);
 
   return <div className={`scene-viewport uliana-studio ${ready ? 'studio-ready' : ''}`} ref={hostRef}>
-    <img className="studio-poster" src={`${assetBasePath}/uliana-studio-poster.png`} alt="ULIANA concept: a person holding a raised push-up over two sensing zones, with a phone beside the mat." aria-hidden={ready} />
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img className="studio-poster" src={`${assetBasePath}/uliana-studio-poster.webp`} alt="ULIANA concept: a person holding a raised push-up over two sensing zones, with a phone beside the mat." aria-hidden={ready} width={740} height={650} decoding="async" />
   </div>;
 }

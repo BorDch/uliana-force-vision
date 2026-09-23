@@ -1,7 +1,7 @@
 "use client";
 
 import { Download, Pause, Play, RotateCcw, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -38,19 +38,37 @@ function SignalChart({ rep, kind }: { rep: DemoRep; kind: "movement" | "hands" }
 
 export function SessionDashboard() {
   const [selectedId, setSelectedId] = useState(2);
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
   const [playhead, setPlayhead] = useState(0);
   const animationRef = useRef<number | null>(null);
   const lastFrameRef = useRef<number | null>(null);
+  const repButtonRefs = useRef<Record<number, HTMLButtonElement | null>>({});
   const rep = demoReps[selectedId - 1];
 
-  useEffect(() => {
-    if (!playing) {
-      lastFrameRef.current = null;
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-      return;
-    }
+  const selectRep = (id: number) => {
+    setSelectedId(id);
+    setPlayhead(0);
+  };
 
+  const handleRepKeys = (event: KeyboardEvent<HTMLDivElement>) => {
+    const keys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"];
+    if (!keys.includes(event.key)) return;
+    event.preventDefault();
+    let next = selectedId;
+    if (event.key === "Home") next = demoReps[0].id;
+    else if (event.key === "End") next = demoReps[demoReps.length - 1].id;
+    else {
+      const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1;
+      next = ((selectedId - 1 + step + demoReps.length) % demoReps.length) + 1;
+    }
+    selectRep(next);
+    repButtonRefs.current[next]?.focus();
+  };
+
+  useEffect(() => {
     const tick = (time: number) => {
       if (lastFrameRef.current !== null) {
         const elapsed = time - lastFrameRef.current;
@@ -59,17 +77,11 @@ export function SessionDashboard() {
       lastFrameRef.current = time;
       animationRef.current = requestAnimationFrame(tick);
     };
-
     animationRef.current = requestAnimationFrame(tick);
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, [playing]);
-
-  useEffect(() => {
-    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (preference.matches) setPlaying(false);
-  }, []);
 
   const bodyOffset = useMemo(() => {
     const normalized = Math.sin((playhead / 100) * Math.PI);
@@ -101,22 +113,22 @@ export function SessionDashboard() {
   return (
     <section id="session-review" className="review-section" aria-labelledby="review-title">
       <div className="review-intro">
-        <div>
+        <div data-reveal="self">
           <div className="section-kicker light-kicker">Demo workspace</div>
           <h2 id="review-title">Read the whole set.<br />Then inspect one rep.</h2>
         </div>
-        <p>
+        <p data-reveal="self">
           A calm review surface for recorded sessions: movement on one side, two localised hand-zone signals on the other, and plain-language observations in between.
         </p>
       </div>
 
-      <div className="review-shell">
+      <div className="review-shell" data-reveal>
         <header className="review-header">
           <div className="review-session-title">
-            <span className="demo-badge"><Sparkles aria-hidden="true" /> Demo dataset</span>
+            <span className="demo-badge"><Sparkles aria-hidden="true" /> Illustrative — not measured data</span>
             <div>
               <h3>Push-up set · session 01</h3>
-              <p>Fixed-view recording · {demoReps.length} repetitions</p>
+              <p>Fixed-view recording · {demoReps.length} repetitions · {setSummary.pace}</p>
             </div>
           </div>
           <Button variant="outline" className="download-button" onClick={downloadSummary}>
@@ -124,18 +136,26 @@ export function SessionDashboard() {
           </Button>
         </header>
 
-        <div className="set-strip" aria-label="Set overview">
-          <div><span>Set pace</span><strong>{setSummary.pace}</strong></div>
-          <div><span>Movement</span><strong>{setSummary.movement}</strong></div>
-          <div><span>Hand-zone pattern</span><strong>{setSummary.load}</strong></div>
+        <div className="set-strip" aria-label={`Values for repetition ${rep.id} of ${demoReps.length}`}>
+          <div><span>Rep {rep.id} of {demoReps.length} · tempo</span><strong>{rep.duration}</strong></div>
+          <div><span>Range in this rep</span><strong>{rep.depth}</strong></div>
+          <div><span>Hand-zone pattern</span><strong>{rep.balanceDetail}</strong></div>
         </div>
 
         <div className="review-workspace">
           <div className="recording-panel">
             <div className="recording-stage">
-              <img src={`${assetBasePath}/uliana-studio-poster.png`} alt="Abstract simulated push-up scene used as a placeholder for a recorded camera view" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`${assetBasePath}/uliana-studio-poster.webp`}
+                alt="Abstract simulated push-up scene used as a placeholder for a recorded camera view"
+                width={740}
+                height={650}
+                loading="lazy"
+                decoding="async"
+              />
               <div className="recording-shade" />
-              <div className="recording-label">Illustrative clip</div>
+              <div className="recording-label">Illustrative clip · not a measured recording</div>
               <div className="pose-trace" aria-hidden="true" style={{ transform: `translateY(${bodyOffset}px)` }}>
                 <span className="joint joint-shoulder" />
                 <span className="joint joint-hip" />
@@ -168,26 +188,39 @@ export function SessionDashboard() {
               <span>{(playhead * 0.028).toFixed(1)} / 2.8 s</span>
             </div>
 
-            <div className="rep-picker" aria-label="Choose a repetition">
+            <div
+              className="rep-picker"
+              role="radiogroup"
+              aria-label="Choose a repetition"
+              onKeyDown={handleRepKeys}
+            >
               {demoReps.map((item) => (
                 <button
                   key={item.id}
+                  type="button"
+                  ref={(node) => { repButtonRefs.current[item.id] = node; }}
                   className={`rep-button rep-${item.status}`}
                   data-active={item.id === selectedId}
-                  onClick={() => { setSelectedId(item.id); setPlayhead(0); }}
-                  aria-pressed={item.id === selectedId}
+                  role="radio"
+                  aria-checked={item.id === selectedId}
+                  tabIndex={item.id === selectedId ? 0 : -1}
+                  onClick={() => selectRep(item.id)}
                 >
                   <span>{item.id}</span>
                   <small>{item.status === "review" ? "Review" : item.duration}</small>
+                  <i className="rep-underline" aria-hidden="true" />
                 </button>
               ))}
             </div>
+            <p className="rep-hint">
+              Click a repetition, or use ← → / Home / End to move through the set. All values here are illustrative.
+            </p>
           </div>
 
           <div className="insight-panel">
             <div className="insight-heading">
               <div>
-                <span>Repetition {rep.id} of {demoReps.length}</span>
+                <span aria-live="polite">Repetition {rep.id} of {demoReps.length}</span>
                 <h3>{statusLabel(rep.status)}</h3>
               </div>
               <span className={`status-pill status-${rep.status}`}>{rep.duration}</span>
@@ -240,7 +273,8 @@ export function SessionDashboard() {
         </div>
 
         <footer className="review-disclaimer">
-          This interface uses bundled demo data to show the intended review flow. Connect evaluated pipeline outputs before presenting it as a real session result.
+          Illustrative demo data in the badge above: these numbers are bundled with the page, not measured from a recording.
+          Connect evaluated pipeline outputs before presenting a session result. Downloading the summary writes the same illustrative values to a text file.
         </footer>
       </div>
     </section>
