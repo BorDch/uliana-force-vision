@@ -20,6 +20,11 @@ if [ -d "$ACTIVE" ]; then mv "$ACTIVE" "$SAVED"; fi
 mv "$ACTIVE" "$NEW"
 if [ -d "$MOBILE" ]; then mv "$MOBILE" "$TEMP_DIR/previous-mobile"; fi
 mv "$NEW" "$MOBILE"
+# The mobile router reads ?screen=live on /app; export only prerenders /.
+# Serve the same client shell at /app without changing backend routes.
+mkdir -p "$MOBILE/client/app"
+cp "$MOBILE/client/index.html" "$MOBILE/client/app/index.html"
+cp "$MOBILE/client/index.rsc" "$MOBILE/client/app/index.rsc"
 restore
 trap - EXIT INT TERM
 rm -rf "$TEMP_DIR"

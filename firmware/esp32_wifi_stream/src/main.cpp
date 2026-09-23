@@ -40,7 +40,12 @@ static String escapeJson(const char* value) {
 static String batchPayload(uint32_t deviceTimeMs) {
   String payload = "{\"schema_version\":1,\"device_id\":\"" + escapeJson(DEVICE_ID) +
                    "\",\"sequence\":" + String(nextSequence) +
-                   ",\"device_time_ms\":" + String(deviceTimeMs) + ",\"channels\":[";
+                   ",\"device_time_ms\":" + String(deviceTimeMs) + ",\"baseline\":{";
+  for (int channel = 0; channel < CHANNEL_COUNT; ++channel) {
+    if (channel) payload += ',';
+    payload += "\"channel_" + String(channel) + "\":" + String(baseline[channel]);
+  }
+  payload += "},\"channels\":[";
   for (int channel = 0; channel < CHANNEL_COUNT; ++channel) {
     if (channel) payload += ',';
     payload += "{\"channel_id\":\"channel_" + String(channel) +
