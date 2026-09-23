@@ -12,6 +12,7 @@ export interface MatVisualizationProps {
   channelData: Record<number, { raw: number; delta: number; hand: boolean }>;
   baselineSet: boolean;
   expectedShoulders?: { left_x: number; right_x: number };
+  handWidth?: { hand_width_cm: number | null; deviation_cm: number | null; classification: "aligned" | "slightly wide" | "slightly narrow" | "too wide" | "too narrow" | null };
   onSensorClick?: (channel: number) => void;
 }
 
@@ -63,7 +64,7 @@ function convexHull(points: Point[]): Point[] {
   return lower.slice(0, -1).concat(upper.slice(0, -1));
 }
 
-export function MatVisualization({ sensors, channelData, baselineSet, expectedShoulders, onSensorClick }: MatVisualizationProps) {
+export function MatVisualization({ sensors, channelData, baselineSet, expectedShoulders, handWidth, onSensorClick }: MatVisualizationProps) {
   const id = useId().replaceAll(":", "");
   const zones = baselineSet ? heatmapZones(sensors, channelData) : [];
   return <div className="sensor-mat" role="group" aria-label="Approximate layout of 16 raw sensor channels">
@@ -93,10 +94,25 @@ export function MatVisualization({ sensors, channelData, baselineSet, expectedSh
       {expectedShoulders && <g className="sensor-shoulder-guides">
         <line x1={expectedShoulders.left_x * 100} y1="0" x2={expectedShoulders.left_x * 100} y2="50" />
         <line x1={expectedShoulders.right_x * 100} y1="0" x2={expectedShoulders.right_x * 100} y2="50" />
-        <text x={expectedShoulders.left_x * 100} y="48">Shoulder L</text>
-        <text x={expectedShoulders.right_x * 100} y="48">Shoulder R</text>
       </g>}
+      {expectedShoulders && handWidth?.hand_width_cm != null && handWidth.deviation_cm != null && Math.abs(handWidth.deviation_cm) >= 1 && handWidth.classification && (() => {
+        const color = handWidth.classification === "aligned" ? "#4CAF50" : handWidth.classification.startsWith("slightly") ? "#FF9800" : "#E53935";
+        const length = Math.min(12, Math.max(1.5, Math.abs(handWidth.deviation_cm) * .75));
+        const direction = handWidth.deviation_cm > 0 ? 1 : -1;
+        const left = expectedShoulders.left_x * 100;
+        const right = expectedShoulders.right_x * 100;
+        return <g className="sensor-width-arrows" stroke={color} fill={color}>
+          <line x1={left} y1="21" x2={left - direction * length} y2="21" />
+          <polygon points={`${left - direction * length},21 ${left - direction * length + direction * 2},19.8 ${left - direction * length + direction * 2},22.2`} />
+          <line x1={right} y1="21" x2={right + direction * length} y2="21" />
+          <polygon points={`${right + direction * length},21 ${right + direction * length - direction * 2},19.8 ${right + direction * length - direction * 2},22.2`} />
+        </g>;
+      })()}
     </svg>
+    {expectedShoulders && <>
+      <span className="sensor-shoulder-label" style={{ left: `${expectedShoulders.left_x * 100}%` }}>Shoulder L</span>
+      <span className="sensor-shoulder-label" style={{ left: `${expectedShoulders.right_x * 100}%` }}>Shoulder R</span>
+    </>}
     <span className="sensor-mat-group sensor-mat-group-right">Right</span>
     <span className="sensor-mat-group sensor-mat-group-left">Left</span>
     {sensors.map(sensor => {

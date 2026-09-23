@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { HandWidthVisual } from "@/components/mobile-video-review";
 
 export type ReviewMoment = { rep_id: number; timestamp_ms: number; shoulder: Point; hip: Point; ankle: Point; target: Point; image_width_px: number; image_height_px: number };
 type Point = { x: number; y: number };
@@ -7,7 +8,15 @@ export function reviewSeekMs(rep: { start_ms: number; bottom_ms?: number }, mome
   return moment?.timestamp_ms ?? rep.bottom_ms ?? rep.start_ms;
 }
 type RepInterval = { start_ms: number; end_ms: number };
-export function ReviewOverlay({ video, moment, interval, skeletonInVideo = false }: { video: HTMLVideoElement | null; moment?: ReviewMoment; interval?: RepInterval; skeletonInVideo?: boolean }) {
+export function handWidthGuideXs(result: HandWidthVisual | null) {
+  if (!result || result.hand_width_cm === null || result.shoulder_width_cm <= 0 || !result.expected_shoulders) return null;
+  const leftShoulder = result.expected_shoulders.left_x;
+  const rightShoulder = result.expected_shoulders.right_x;
+  const center = (leftShoulder + rightShoulder) / 2;
+  const handSpan = Math.abs(rightShoulder - leftShoulder) * result.hand_width_cm / result.shoulder_width_cm;
+  return { leftShoulder, rightShoulder, leftHand: center - handSpan / 2, rightHand: center + handSpan / 2 };
+}
+export function ReviewOverlay({ video, moment, interval, skeletonInVideo = false, handWidth = null }: { video: HTMLVideoElement | null; moment?: ReviewMoment; interval?: RepInterval; skeletonInVideo?: boolean; handWidth?: HandWidthVisual | null }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [time, setTime] = useState(0);
   useEffect(() => {
@@ -45,13 +54,6 @@ export function ReviewOverlay({ video, moment, interval, skeletonInVideo = false
     const shoulder = point(moment.shoulder), hip = point(moment.hip), ankle = point(moment.ankle), target = point(moment.target);
     context.lineCap = "round";
     context.lineJoin = "round";
-    // A dark solid rail keeps the warm dashed reference distinct from the pose line.
-    context.beginPath(); context.moveTo(shoulder.x, shoulder.y); context.lineTo(ankle.x, ankle.y);
-    context.strokeStyle = "#493a32"; context.lineWidth = 5; context.stroke();
-    context.setLineDash([7, 5]);
-    context.strokeStyle = "#f8e6d0"; context.lineWidth = 2.5; context.stroke();
-    context.setLineDash([]);
-
     // The annotated video has the actual pose for each frame. A saved frame is only shown at its own moment.
     if (!skeletonInVideo && atReviewMoment) {
       context.save(); context.globalAlpha = 0.9;
@@ -59,6 +61,13 @@ export function ReviewOverlay({ video, moment, interval, skeletonInVideo = false
       context.strokeStyle = "#75937b"; context.lineWidth = 2.5; context.stroke();
       context.restore();
     }
+
+    // A dark solid rail keeps the warm dashed reference distinct from the pose line.
+    context.beginPath(); context.moveTo(shoulder.x, shoulder.y); context.lineTo(ankle.x, ankle.y);
+    context.strokeStyle = "#493a32"; context.lineWidth = 5; context.stroke();
+    context.setLineDash([7, 5]);
+    context.strokeStyle = "#f8e6d0"; context.lineWidth = 2.5; context.stroke();
+    context.setLineDash([]);
 
     context.font = "600 10px system-ui, sans-serif";
     const caption = "Reference alignment";
@@ -84,6 +93,29 @@ export function ReviewOverlay({ video, moment, interval, skeletonInVideo = false
     context.fillText(caption, labelX + 7, labelY + 12);
     context.restore();
 
+    const atHandWidthMoment = Math.abs(time - moment.timestamp_ms) <= 500;
+    const guides = handWidthGuideXs(handWidth);
+    if (atHandWidthMoment && guides) {
+      const leftShoulderX = offsetX + guides.leftShoulder * visibleWidth;
+      const rightShoulderX = offsetX + guides.rightShoulder * visibleWidth;
+      const leftHandX = offsetX + guides.leftHand * visibleWidth;
+      const rightHandX = offsetX + guides.rightHand * visibleWidth;
+      const guide = (x: number, label: string, color: string, dashed: boolean, labelY: number) => {
+        context.save(); context.globalAlpha = .78;
+        context.beginPath(); context.moveTo(x, offsetY + 5); context.lineTo(x, offsetY + visibleHeight - 5);
+        context.setLineDash(dashed ? [5, 4] : []); context.strokeStyle = color; context.lineWidth = 2; context.stroke();
+        context.setLineDash([]); context.font = "700 10px system-ui, sans-serif"; context.textAlign = "center";
+        const labelWidth = context.measureText(label).width + 8;
+        const labelX = Math.max(offsetX + labelWidth / 2, Math.min(offsetX + visibleWidth - labelWidth / 2, x));
+        context.fillStyle = "rgba(255,250,243,.86)"; context.fillRect(labelX - labelWidth / 2, labelY - 10, labelWidth, 13);
+        context.fillStyle = color; context.fillText(label, labelX, labelY); context.restore();
+      };
+      guide(leftShoulderX, "Shoulder L", "#8D6E63", true, offsetY + 15);
+      guide(rightShoulderX, "Shoulder R", "#8D6E63", true, offsetY + 15);
+      guide(leftHandX, "Hand L", "#1976D2", false, offsetY + visibleHeight - 9);
+      guide(rightHandX, "Hand R", "#1976D2", false, offsetY + visibleHeight - 9);
+    }
+
     if (!atReviewMoment) return;
 
     const markerRadius = Math.max(9, Math.min(15, rect.width * 0.037));
@@ -106,7 +138,7 @@ export function ReviewOverlay({ video, moment, interval, skeletonInVideo = false
       context.closePath(); context.fillStyle = "#ee6b5d"; context.fill();
       context.strokeStyle = "#493a32"; context.lineWidth = 1.5; context.stroke();
     }
-  }, [interval, moment, skeletonInVideo, time, video]);
+  }, [handWidth, interval, moment, skeletonInVideo, time, video]);
   useEffect(() => { draw(); const observer = new ResizeObserver(draw); if (video) observer.observe(video); return () => observer.disconnect(); }, [draw, video]);
   return <canvas ref={canvas} className="review-video-overlay" aria-hidden="true" />;
 }

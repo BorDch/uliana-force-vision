@@ -16,7 +16,7 @@ import {
   Upload,
 } from "lucide-react";
 import { mobileCopy } from "@/lib/mobile-copy";
-import { AudioReviewCue, explainReview } from "@/components/mobile-video-review";
+import { AudioReviewCue, explainReview, HandWidthComparison, type HandWidthVisual } from "@/components/mobile-video-review";
 import { ReviewOverlay, reviewSeekMs, type ReviewMoment } from "@/components/review-overlay";
 import { apiFetch } from "@/lib/api";
 import { getAudioCueText } from "@/lib/audio-cues";
@@ -263,7 +263,7 @@ function ChatReport({ result, demo, onAllChecks }: { result: SessionResult; demo
   const [showWhy, setShowWhy] = useState(false);
   const [showFinal, setShowFinal] = useState(false);
   const [moments, setMoments] = useState<ReviewMoment[]>([]);
-  const [handWidth, setHandWidth] = useState<HandWidthChatResult | null>(null);
+  const [handWidth, setHandWidth] = useState<(HandWidthChatResult & HandWidthVisual) | null>(null);
   const [video, setVideo] = useState<HTMLVideoElement | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const attachVideo = useCallback((element: HTMLVideoElement | null) => { videoRef.current = element; setVideo(element); }, []);
@@ -288,7 +288,7 @@ function ChatReport({ result, demo, onAllChecks }: { result: SessionResult; demo
     if (demo) return;
     let active = true;
     apiFetch(`${API}/api/sessions/${result.session_id}/hand-width`, { cache: "no-store" })
-      .then(response => response.ok ? response.json() as Promise<HandWidthChatResult> : Promise.reject())
+      .then(response => response.ok ? response.json() as Promise<HandWidthChatResult & HandWidthVisual> : Promise.reject())
       .then(data => { if (active) setHandWidth(data); })
       .catch(() => undefined);
     return () => { active = false; };
@@ -304,7 +304,7 @@ function ChatReport({ result, demo, onAllChecks }: { result: SessionResult; demo
     <div className="coach-chat-messages" aria-live="polite">
       <article className="coach-message"><p>You completed {plural(result.repetition_count ?? 0, "repetition")}. {primary ? "I found one thing worth a look." : "There is no supported issue to review in the available checks."}</p></article>
       {showSecond && primary && <article className="coach-message"><p>{primary.condition === "body_alignment_deviation" ? `In ${count} of ${assessed} assessed reps, the shoulder–hip–ankle line moved outside the assessed range.` : `In ${count} of ${assessed} assessed reps, the visible lowering range moved outside the assessed range.`} Rep {primary.rep_id} shows it most clearly.</p><button onClick={() => setShowMoment(true)} disabled={!interval}><Play /> Show exact moment</button></article>}
-      {showMoment && primary && interval && <article className="coach-message coach-moment"><div className="review-video-wrap"><video ref={attachVideo} className="result-video" src={result.annotated_video_url || result.source_video_url} controls playsInline preload="metadata" /><ReviewOverlay video={video} moment={moment} interval={interval} skeletonInVideo={Boolean(result.annotated_video_url)} /></div>{!moment && primary.condition === "body_alignment_deviation" && !demo && <p className="review-frame-unavailable">Review frame unavailable from this recording. Landmark quality was insufficient.</p>}{explanation && <><p><strong>Issue</strong>{explanation.issue}</p><p><strong>Evidence</strong>{explanation.evidence}</p><p><strong>Action</strong>{explanation.action}</p></>}<div className="coach-message-actions"><button onClick={() => setShowWhy(true)}>Why this matters</button></div><AudioReviewCue cue={getAudioCueText(primary.condition, primary.result)} momentKey={`${result.session_id}:${primary.rep_id}`} sessionId={result.session_id} video={video} targetMs={reviewSeekMs(interval, moment)} /></article>}
+      {showMoment && primary && interval && <article className="coach-message coach-moment"><div className="review-video-wrap"><video ref={attachVideo} className="result-video" src={result.annotated_video_url || result.source_video_url} controls playsInline preload="metadata" /><ReviewOverlay video={video} moment={moment} interval={interval} skeletonInVideo={Boolean(result.annotated_video_url)} handWidth={handWidth} /></div><HandWidthComparison result={handWidth} />{!moment && primary.condition === "body_alignment_deviation" && !demo && <p className="review-frame-unavailable">Review frame unavailable from this recording. Landmark quality was insufficient.</p>}{explanation && <><p><strong>Issue</strong>{explanation.issue}</p><p><strong>Evidence</strong>{explanation.evidence}</p><p><strong>Action</strong>{explanation.action}</p></>}<div className="coach-message-actions"><button onClick={() => setShowWhy(true)}>Why this matters</button></div><AudioReviewCue cue={getAudioCueText(primary.condition, primary.result)} momentKey={`${result.session_id}:${primary.rep_id}`} sessionId={result.session_id} video={video} targetMs={reviewSeekMs(interval, moment)} /></article>}
       {showWhy && primary && <article className="coach-message"><p>{why.text}</p><p>Source: <a href={why.source} target="_blank" rel="noreferrer">{why.source}</a></p><small>These sources support the biomechanical criteria. The prototype&apos;s numerical thresholds have not yet been independently validated.</small></article>}
       {showFinal && handWidthCoachMessage(handWidth) && <article className="coach-message"><p>{handWidthCoachMessage(handWidth)}</p></article>}
       {showFinal && <article className="coach-message"><p>{supportedAssessments(result).filter(item => item.result === "condition_detected").length === 1 ? "That’s the only thing to focus on next time. Other available checks looked consistent." : nextSessionCopy(result, reviewIds(result))}</p><div className="coach-message-actions"><a href={`${screenPath("/app")}&upload=1`}>Record another set</a><button onClick={allChecks}>All checks</button></div></article>}

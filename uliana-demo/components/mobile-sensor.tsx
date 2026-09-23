@@ -8,6 +8,7 @@ import { MatVisualization, SENSOR_LAYOUT } from "@/components/mat-visualization"
 type Channel = { channel_id: string; raw_value: number; delta: number | null; hand: boolean };
 type Device = { pairing_id: string; device_id: string; state: string; last_seen_at: string | null; last_sequence: number | null; sample_sequence?: number | null; channels: Channel[]; baseline?: Record<string, number> };
 export type HandWidthResult = {
+  shoulder_width_cm: number;
   hand_width_cm: number | null;
   deviation_cm: number | null;
   classification: "aligned" | "slightly wide" | "slightly narrow" | "too wide" | "too narrow" | null;
@@ -66,7 +67,7 @@ function SensorMat({ device, handWidth }: { device: Device; handWidth: HandWidth
   return <div>
     <strong>Raw experimental sensor signal</strong>
     <p className="sensor-heatmap-note">Delta is the absolute change from the ESP32 calibration baseline. Calibrate with the mat untouched.</p>
-    <MatVisualization sensors={SENSOR_LAYOUT} channelData={channelData} baselineSet={device.baseline !== null && device.baseline !== undefined} expectedShoulders={handWidth?.expected_shoulders ?? undefined} onSensorClick={setSelectedChannel} />
+    <MatVisualization sensors={SENSOR_LAYOUT} channelData={channelData} baselineSet={device.baseline !== null && device.baseline !== undefined} expectedShoulders={handWidth?.expected_shoulders ?? undefined} handWidth={handWidth ?? undefined} onSensorClick={setSelectedChannel} />
     <HandWidthStatus result={handWidth} />
     <p className="sensor-mat-reading" aria-live="polite">C{selectedChannel} · raw {selected.raw} · delta {selectedReading?.delta ?? "unavailable"} · {selectedReading?.delta == null ? "waiting for ESP32 baseline" : selected.hand ? "[HAND]" : "no touch"}</p>
     <div className="sensor-heatmap-legend" aria-label="Sensor activity legend">

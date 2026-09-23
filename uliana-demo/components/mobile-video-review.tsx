@@ -2,6 +2,39 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { getAudioCueText } from "@/lib/audio-cues";
+import type { HandWidthClassification } from "@/lib/hand-width-copy";
+
+export type HandWidthVisual = {
+  shoulder_width_cm: number;
+  hand_width_cm: number | null;
+  deviation_cm: number | null;
+  classification: HandWidthClassification | null;
+  expected_shoulders: { left_x: number; right_x: number } | null;
+};
+
+export function handWidthTone(classification: HandWidthClassification | null) {
+  if (classification === "aligned") return "aligned";
+  if (classification?.startsWith("slightly")) return "slightly";
+  return classification ? "too" : "unassessed";
+}
+
+export function HandWidthComparison({ result }: { result: HandWidthVisual | null }) {
+  if (!result || result.hand_width_cm === null || result.deviation_cm === null || !result.classification) {
+    return <section className="hand-width-comparison hand-width-comparison-empty" aria-label="Hand width comparison"><h3>Hand width comparison</h3><p>Hand width: not assessed</p></section>;
+  }
+  const maximum = Math.max(result.hand_width_cm, result.shoulder_width_cm, 1);
+  const handPercent = `${result.hand_width_cm / maximum * 100}%`;
+  const shoulderPercent = `${result.shoulder_width_cm / maximum * 100}%`;
+  const difference = Math.abs(result.deviation_cm);
+  const summary = result.classification === "aligned" ? "Aligned with shoulders." :
+    `${difference} cm ${result.deviation_cm > 0 ? "wider" : "narrower"} than shoulders.`;
+  return <section className={`hand-width-comparison hand-width-comparison-${handWidthTone(result.classification)}`} aria-label="Hand width comparison">
+    <h3>Hand width comparison</h3>
+    <div className="hand-width-bar-row"><span>Hand width</span><i><b style={{ width: handPercent }} /></i><strong>{result.hand_width_cm} cm</strong></div>
+    <div className="hand-width-bar-row hand-width-shoulder"><span>Shoulder width</span><i><b style={{ width: shoulderPercent }} /></i><strong>{result.shoulder_width_cm} cm</strong></div>
+    <p>{summary}</p>
+  </section>;
+}
 
 export type ReviewAssessment = { condition: string; result: string; reason?: string; evidence?: Record<string, unknown> };
 export function explainReview(assessment?: ReviewAssessment) {

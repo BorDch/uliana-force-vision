@@ -110,10 +110,17 @@ test("shoulder guides use normalized x positions", () => {
 });
 
 test("hand width status formats classification and disagreement", () => {
-  const result: HandWidthResult = { hand_width_cm: 48, deviation_cm: 6, classification: "slightly wide", sensor_camera_agree: false, expected_shoulders: null };
+  const result: HandWidthResult = { shoulder_width_cm: 42, hand_width_cm: 48, deviation_cm: 6, classification: "slightly wide", sensor_camera_agree: false, expected_shoulders: null };
   const html = renderToStaticMarkup(<HandWidthStatus result={result} />);
   assert.match(html, /Hand width: 48 cm \(6 cm wider than shoulders\)/);
   assert.match(html, /hand-width-slightly/);
   assert.match(html, /Camera and sensor disagree/);
   assert.match(renderToStaticMarkup(<HandWidthStatus result={null} />), /Hand width: not assessed/);
+});
+
+test("heatmap draws proportional arrows only for assessed deviations", () => {
+  const assessed = renderToStaticMarkup(<MatVisualization sensors={SENSOR_LAYOUT} channelData={readings([])} baselineSet expectedShoulders={{ left_x: .3, right_x: .7 }} handWidth={{ hand_width_cm: 48, deviation_cm: 6, classification: "slightly wide" }} />);
+  assert.match(assessed, /class="sensor-width-arrows" stroke="#FF9800"/);
+  const aligned = renderToStaticMarkup(<MatVisualization sensors={SENSOR_LAYOUT} channelData={readings([])} baselineSet expectedShoulders={{ left_x: .3, right_x: .7 }} handWidth={{ hand_width_cm: 42, deviation_cm: .5, classification: "aligned" }} />);
+  assert.doesNotMatch(aligned, /sensor-width-arrows/);
 });
