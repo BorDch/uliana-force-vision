@@ -1,0 +1,48 @@
+.venv/
+# Data (SQLite, user sessions, videos)
+data/
+
+# Builds
+dist/
+dist-mobile/
+uliana-demo/dist-mobile/
+uliana-demo/.mobile-build.*/
+uliana-demo/tsconfig.tsbuildinfo
+
+# Secrets
+firmware/esp32_wifi_stream/src/config.h
+
+# Archives and binaries
+*.zip
+*.z01
+*.tgz
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv*/
+.pio/
+
+# Local artifacts
+artifacts/local/
+*.log
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv-video/
+data/raw/pushups/*
+!data/raw/pushups/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+models/*.task
+models/*.tflite
+artifacts/real_video/*/
+data/annotations/*consent*
+data/demo_sessions/
+.venv-tts/
+.kokoro-cache/
+firmware/esp32_wifi_stream/config.h
+firmware/esp32_wifi_stream/.pio/

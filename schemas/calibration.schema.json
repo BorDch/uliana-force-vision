@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ULIANA Pressure Calibration",
+  "type": "object",
+  "required": ["schema_version", "calibrations"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "calibrations": {"type": "array", "items": {"$ref": "#/$defs/channelCalibration"}}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "channelCalibration": {
+      "type": "object",
+      "required": ["calibration_id", "sensor_id", "channel_id", "tare_raw", "newtons_per_raw_unit", "valid_raw_min", "valid_raw_max", "created_at", "reference_notes"],
+      "properties": {
+        "calibration_id": {"type": "string", "minLength": 1},
+        "sensor_id": {"type": "string", "minLength": 1},
+        "channel_id": {"type": "string", "minLength": 1},
+        "tare_raw": {"type": "number"},
+        "newtons_per_raw_unit": {"type": "number", "exclusiveMinimum": 0},
+        "valid_raw_min": {"type": "number"},
+        "valid_raw_max": {"type": "number"},
+        "created_at": {"type": "string", "format": "date-time"},
+        "expires_at": {"type": ["string", "null"], "format": "date-time"},
+        "reference_notes": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

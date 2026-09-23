@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ULIANA Video Observation",
+  "type": "object",
+  "required": ["schema_version", "session_id", "frame_index", "timestamp_ms", "timestamp_source", "fps", "image_width_px", "image_height_px", "pose", "viewpoint", "quality_flags"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "session_id": {"type": "string", "minLength": 1},
+    "frame_index": {"type": "integer", "minimum": 0},
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "timestamp_source": {"type": "string", "minLength": 1},
+    "fps": {"type": "number", "exclusiveMinimum": 0},
+    "image_width_px": {"type": "integer", "minimum": 1},
+    "image_height_px": {"type": "integer", "minimum": 1},
+    "pose": {"$ref": "#/$defs/pose"},
+    "viewpoint": {"$ref": "#/$defs/viewpoint"},
+    "quality_flags": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "landmark": {
+      "type": "object", "required": ["x", "y", "z", "visibility", "presence"],
+      "properties": {
+        "x": {"type": "number"}, "y": {"type": "number"}, "z": {"type": ["number", "null"]},
+        "visibility": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "presence": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      }, "additionalProperties": false
+    },
+    "pose": {
+      "type": "object", "required": ["detected", "landmarks", "model_confidence", "raw_landmarks", "world_landmarks", "world_landmarks_caveat"],
+      "properties": {
+        "detected": {"type": "boolean"},
+        "landmarks": {"type": "object", "additionalProperties": {"$ref": "#/$defs/landmark"}},
+        "model_confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "raw_landmarks": {"type": ["object", "null"], "additionalProperties": {"$ref": "#/$defs/landmark"}},
+        "world_landmarks": {"type": ["object", "null"], "additionalProperties": {"$ref": "#/$defs/landmark"}},
+        "world_landmarks_caveat": {"type": ["string", "null"]}
+      }, "additionalProperties": false
+    },
+    "viewpoint": {
+      "type": "object", "required": ["value", "confidence", "reason"],
+      "properties": {
+        "value": {"enum": ["side", "front", "oblique", "unknown"]},
+        "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "reason": {"type": ["string", "null"]}
+      }, "additionalProperties": false
+    }
+  }
+}

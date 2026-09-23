@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "device_id": "esp32-demo-01",
+  "sequence": 125,
+  "device_time_ms": 473920,
+  "channels": [
+    { "channel_id": "channel_1", "raw_value": 1824 },
+    { "channel_id": "channel_2", "raw_value": 1761 }
+  ]
+}

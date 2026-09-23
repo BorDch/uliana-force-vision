@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ULIANA Legacy Smart Mat Packet",
+  "description": "Legacy calibrated smart-mat contract used in earlier prototype experiments (left/right force and status). This schema is retained only as historical reference material. The active experimental sensor contract for the ESP32 pilot is device-packet.schema.json, which stores raw channels only.",
+  "type": "object",
+  "required": ["schema_version", "device_id", "timestamp_ms", "left_force_n", "right_force_n", "status"],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "device_id": { "type": "string" },
+    "timestamp_ms": { "type": "integer", "minimum": 0 },
+    "left_force_n": { "type": "number", "minimum": 0 },
+    "right_force_n": { "type": "number", "minimum": 0 },
+    "battery_percent": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+    "status": { "enum": ["ok", "calibrating", "overload", "error"] }
+  },
+  "additionalProperties": false
+}

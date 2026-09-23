@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ULIANA Session Result",
+  "type": "object",
+  "required": ["schema_version", "session_id", "mode", "repetition_count", "repetition_intervals", "detected_viewpoint", "assessments", "pressure_features", "synchronization", "overall_assessment_coverage", "warnings", "unavailable_assessments", "viewpoint_changes", "provenance", "repetition_results", "primary_cue", "repeated_conditions", "modality_availability", "coverage", "limitations"],
+  "properties": {
+    "schema_version": {"const": "1.0"}, "session_id": {"type": "string", "minLength": 1},
+    "mode": {"enum": ["camera_only", "pressure_only", "multimodal"]},
+    "repetition_count": {"type": ["integer", "null"], "minimum": 0},
+    "repetition_intervals": {"type": "array", "items": {"$ref": "#/$defs/repetition"}},
+    "detected_viewpoint": {"$ref": "#/$defs/viewpoint"},
+    "assessments": {"type": "array", "items": {"$ref": "#/$defs/assessment"}},
+    "pressure_features": {"type": ["object", "null"], "additionalProperties": {"type": ["number", "integer", "string", "null"]}},
+    "synchronization": {"$ref": "#/$defs/synchronization"},
+    "overall_assessment_coverage": {"type": "number", "minimum": 0, "maximum": 1},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "unavailable_assessments": {"type": "array", "items": {"$ref": "#/$defs/unavailableAssessment"}},
+    "viewpoint_changes": {"type": "array", "items": {"type": "object"}},
+    "provenance": {"type": "object"},
+    "repetition_results": {"type": "array", "items": {"type": "object"}},
+    "primary_cue": {"type": ["object", "null"]},
+    "repeated_conditions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "modality_availability": {"type": "object", "additionalProperties": {"type": "boolean"}},
+    "coverage": {"type": "object", "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}},
+    "limitations": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "viewpoint": {"type": "object", "required": ["value", "confidence", "reason"], "properties": {
+      "value": {"enum": ["side", "front", "oblique", "unknown"]}, "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1}, "reason": {"type": ["string", "null"]}
+    }, "additionalProperties": false},
+    "repetition": {"type": "object", "required": ["rep_id", "start_ms", "bottom_ms", "end_ms", "confidence", "selected_phase_signal", "quality_flags"], "properties": {
+      "rep_id": {"type": "integer", "minimum": 1}, "start_ms": {"type": "integer", "minimum": 0}, "bottom_ms": {"type": ["integer", "null"], "minimum": 0}, "end_ms": {"type": "integer", "minimum": 0}, "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+      "selected_phase_signal": {"type": ["string", "null"]}, "quality_flags": {"type": "array", "items": {"type": "string"}}
+    }, "additionalProperties": false},
+    "assessment": {"type": "object", "required": ["condition", "result", "confidence", "reason", "rep_id", "modality", "evidence"], "properties": {
+      "condition": {"type": "string", "minLength": 1}, "result": {"enum": ["adequate", "condition_detected", "unavailable"]},
+      "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1}, "reason": {"type": ["string", "null"]},
+      "rep_id": {"type": ["integer", "null"], "minimum": 1}, "modality": {"enum": ["camera", "pressure", "multimodal", null]},
+      "evidence": {"type": ["object", "null"]}
+    }, "allOf": [{"if": {"properties": {"result": {"const": "unavailable"}}}, "then": {"properties": {"reason": {"type": "string", "minLength": 1}}, "required": ["reason"]}}], "additionalProperties": false},
+    "unavailableAssessment": {"allOf": [{"$ref": "#/$defs/assessment"}, {"properties": {"result": {"const": "unavailable"}}}]},
+    "synchronization": {"type": "object", "required": ["status", "method", "estimated_offset_ms", "estimated_drift_ppm", "matched_fraction", "median_error_ms", "p95_error_ms", "reason", "maximum_gap_ms", "warnings"], "properties": {
+      "status": {"enum": ["not_applicable", "acceptable", "poor", "unavailable"]}, "method": {"type": ["string", "null"]},
+      "estimated_offset_ms": {"type": ["number", "null"]}, "estimated_drift_ppm": {"type": ["number", "null"]},
+      "matched_fraction": {"type": ["number", "null"], "minimum": 0, "maximum": 1}, "median_error_ms": {"type": ["number", "null"], "minimum": 0},
+      "p95_error_ms": {"type": ["number", "null"], "minimum": 0}, "reason": {"type": ["string", "null"]},
+      "maximum_gap_ms": {"type": ["number", "null"], "minimum": 0}, "warnings": {"type": "array", "items": {"type": "string"}}
+    }, "additionalProperties": false}
+  }
+}

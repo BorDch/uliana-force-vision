@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ULIANA Session Metadata",
+  "type": "object",
+  "required": ["schema_version", "participant_id", "session_id", "experience_level", "camera_viewpoint", "exercise_variation", "expected_repetitions", "intentionally_performed_condition", "consent_status", "hardware_configuration", "notes"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "participant_id": {"type": "string", "minLength": 1},
+    "session_id": {"type": "string", "minLength": 1},
+    "experience_level": {"enum": ["beginner", "intermediate", "advanced", "unknown"]},
+    "camera_viewpoint": {"enum": ["side", "front", "oblique", "unknown"]},
+    "exercise_variation": {"type": "string", "minLength": 1},
+    "expected_repetitions": {"type": ["integer", "null"], "minimum": 0},
+    "intentionally_performed_condition": {"type": ["string", "null"]},
+    "consent_status": {"enum": ["granted", "denied", "withdrawn", "unknown"]},
+    "hardware_configuration": {
+      "type": "object",
+      "properties": {
+        "camera_id": {"type": ["string", "null"]},
+        "pressure_sensor_id": {"type": ["string", "null"]},
+        "video_fps": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "pressure_sampling_rate_hz": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "channel_region_map": {"type": ["object", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "notes": {"type": "string"},
+    "split": {"enum": ["development", "test", "unassigned"], "default": "unassigned"},
+    "test_fixture": {"type": "boolean", "default": false},
+    "synchronization": {
+      "type": ["object", "null"],
+      "properties": {
+        "mode": {"enum": ["shared_relative_clock", "configured_constant_offset", "shared_synchronization_event", "linear_anchors", "unavailable"]},
+        "video_timestamp_origin": {"type": ["string", "null"]},
+        "pressure_timestamp_origin": {"type": ["string", "null"]},
+        "configured_offset_ms": {"type": ["number", "null"]},
+        "anchors": {"type": "array", "items": {"type": "object", "required": ["video_timestamp_ms", "pressure_timestamp_ms"], "properties": {
+          "video_timestamp_ms": {"type": "number"}, "pressure_timestamp_ms": {"type": "number"}
+        }, "additionalProperties": false}},
+        "expected_channels": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "nominal_sampling_rate_hz": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "regions": {"type": ["object", "null"], "additionalProperties": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}},
+        "maximum_interpolation_gap_ms": {"type": ["integer", "null"], "minimum": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

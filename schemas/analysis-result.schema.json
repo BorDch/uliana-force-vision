@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ULIANA Analysis Result",
+  "type": "object",
+  "required": ["schema_version", "source", "session_id", "timestamp_ms", "rep_id", "phase", "measurements", "quality", "decision"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "source": {"enum": ["toy_simulator", "prototype_device", "mobile_app"]},
+    "session_id": {"type": "string"},
+    "timestamp_ms": {"type": "integer"},
+    "rep_id": {"type": "integer", "minimum": 1},
+    "phase": {"enum": ["up", "down", "transition"]},
+    "measurements": {
+      "type": "object",
+      "required": ["left_force_n", "right_force_n", "asymmetry_percent", "elbow_angle_deg", "body_line_error_deg"]
+    },
+    "quality": {
+      "type": "object",
+      "required": ["overall", "balance", "depth", "alignment"]
+    },
+    "decision": {
+      "type": "object",
+      "required": ["cue", "confidence", "abstained", "reason"]
+    }
+  }
+}

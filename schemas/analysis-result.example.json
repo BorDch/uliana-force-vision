@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "source": "toy_simulator",
+  "session_id": "sim-2026-09-09-01",
+  "timestamp_ms": 1788951600000,
+  "rep_id": 1,
+  "phase": "down",
+  "measurements": {
+    "left_force_n": 214.3,
+    "right_force_n": 176.8,
+    "asymmetry_percent": 9.6,
+    "elbow_angle_deg": 94.2,
+    "body_line_error_deg": 3.1
+  },
+  "quality": {
+    "overall": 83,
+    "balance": 79,
+    "depth": 95,
+    "alignment": 84
+  },
+  "decision": {
+    "cue": "Good repetition",
+    "confidence": 0.91,
+    "abstained": false,
+    "reason": null
+  }
+}

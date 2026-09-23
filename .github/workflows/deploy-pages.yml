@@ -42,6 +42,7 @@ jobs:
         env:
           STATIC_ASSET_PREFIX: /${{ github.event.repository.name }}
           NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+          NEXT_PUBLIC_STATIC_DEMO: "1"
         run: npm run build:static
 
       # The static export mirrors the asset prefix to disk (dist/client/<repo>/_next).

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ULIANA Pressure Observation",
+  "type": "object",
+  "required": ["schema_version", "session_id", "timestamp_ms", "timestamp_source", "sensor_id", "channel_id", "raw_value", "calibrated_force_n", "calibration", "grid_position", "quality_flags"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "session_id": {"type": "string", "minLength": 1},
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "timestamp_source": {"type": "string", "minLength": 1},
+    "sensor_id": {"type": "string", "minLength": 1},
+    "channel_id": {"type": "string", "minLength": 1},
+    "raw_value": {"type": "number"},
+    "calibrated_force_n": {"type": ["number", "null"], "minimum": 0},
+    "calibration": {
+      "type": "object", "required": ["status", "calibration_id"],
+      "properties": {
+        "status": {"enum": ["calibrated", "uncalibrated", "expired", "invalid", "unknown"]},
+        "calibration_id": {"type": ["string", "null"]}
+      }, "additionalProperties": false
+    },
+    "grid_position": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "object", "required": ["row", "column"], "properties": {
+          "row": {"type": ["integer", "null"], "minimum": 0},
+          "column": {"type": ["integer", "null"], "minimum": 0}
+        }, "additionalProperties": false}
+      ]
+    },
+    "quality_flags": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+  },
+  "allOf": [
+    {"if": {"properties": {"calibration": {"properties": {"status": {"const": "calibrated"}}}}},
+     "then": {"properties": {"calibrated_force_n": {"type": "number"}}}},
+    {"if": {"properties": {"calibration": {"properties": {"status": {"enum": ["uncalibrated", "expired", "invalid", "unknown"]}}}}},
+     "then": {"properties": {"calibrated_force_n": {"type": "null"}}}}
+  ],
+  "additionalProperties": false
+}
