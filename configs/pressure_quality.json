@@ -1,0 +1,15 @@
+{
+  "expected_channels": [],
+  "nominal_sampling_rate_hz": null,
+  "minimum_sampling_rate_fraction": 0.8,
+  "long_gap_ms": 100,
+  "saturation_raw_min": null,
+  "saturation_raw_max": null,
+  "stuck_tolerance_raw": 0.0,
+  "stuck_duration_ms": 500,
+  "near_zero_total_force_n": 20.0,
+  "near_zero_total_raw": 1.0,
+  "minimum_region_coverage": 0.7,
+  "imbalance_alert_percent": 10.0,
+  "maximum_interpolation_gap_ms": 100
+}

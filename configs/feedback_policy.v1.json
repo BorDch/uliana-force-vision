@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "uliana-deterministic-feedback",
+  "policy_version": "1.0.0",
+  "assessment_policy_version": "1.0.0",
+  "priority": ["recording_quality", "body_alignment_deviation", "push_up_depth_proxy", "head_neck_alignment", "elbow_to_torso_flare", "hand_placement", "completed_movement_cycles"],
+  "tie_break": ["largest_persistent_fraction", "longest_persistent_duration_ms", "lowest_rep_id", "criterion_priority"],
+  "maximum_supporting_observations": 2,
+  "maximum_next_steps": 3,
+  "forbidden_claim_terms": ["injury risk", "safe", "perfect form", "weak core", "fatigue", "next workout", "lumbar hyperextension", "spinal overload"],
+  "validation_status": "deterministic-copy-policy-not-trainer-validated"
+}

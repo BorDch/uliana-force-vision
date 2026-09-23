@@ -1,0 +1,30 @@
+{
+  "seed": 42,
+  "participants": 30,
+  "repetitions_per_participant": 20,
+  "force_hz": 50,
+  "pose_hz": 30,
+  "duration_seconds": [2.0, 4.0],
+  "synchronization": {"max_difference_ms": 50},
+  "smoothing": {"window_samples": 5},
+  "state_machine": {"up_angle_deg": 150, "down_angle_deg": 135, "hysteresis_deg": 5},
+  "reliability": {
+    "min_pose_confidence": 0.65,
+    "min_total_force_n": 20,
+    "max_force_n": 650,
+    "min_synchronized_fraction": 0.7
+  },
+  "thresholds": {
+    "asymmetry_percent": 10,
+    "insufficient_depth_angle_deg": 110,
+    "body_line_error_deg": 8,
+    "persistence_ms": 250
+  },
+  "scoring": {"balance_weight": 0.4, "depth_weight": 0.3, "alignment_weight": 0.3},
+  "noise": {"force_std_n": 6, "pose_angle_std_deg": 2, "timestamp_jitter_ms": 8, "missing_probability": 0.01},
+  "scenarios": [
+    "balanced", "left_overload", "right_overload", "insufficient_depth", "body_line_error",
+    "left_overload_and_body_line_error", "right_overload_and_insufficient_depth", "low_pose_confidence",
+    "missing_force_samples", "delayed_force_samples", "sensor_saturation", "near_zero_total_force"
+  ]
+}

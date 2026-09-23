@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Future trainer-labelled controlled recordings for ULIANA push-up criteria",
+  "required_recording_conditions": [
+    "reference_form",
+    "visible_body_line_deviation",
+    "limited_range_of_motion",
+    "altered_head_position",
+    "elbow_flare",
+    "altered_hand_placement",
+    "deliberately_unsuitable_camera_placement"
+  ],
+  "required_fields": [
+    "participant_id",
+    "viewpoint",
+    "intended_condition",
+    "manual_repetition_count",
+    "trainer_label_per_repetition",
+    "criterion_level",
+    "model_result",
+    "availability_reason"
+  ],
+  "criterion_levels": {
+    "supported": ["body_alignment_deviation", "push_up_depth_proxy"],
+    "experimental": ["head_neck_alignment", "elbow_to_torso_flare", "hand_placement"]
+  },
+  "supported_evaluation": [
+    "assessment_coverage",
+    "precision",
+    "recall",
+    "f1",
+    "results_by_viewpoint",
+    "results_by_participant"
+  ],
+  "headline_accuracy_exclusions": [
+    "Experimental criteria remain excluded until trainer labels are collected and thresholds are frozen."
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "plausible_fps": {"minimum": 5.0, "maximum": 240.0},
+  "maximum_pose_gap_ms": 250,
+  "landmark_quality": {
+    "minimum_visibility": 0.65,
+    "minimum_presence": 0.65,
+    "frame_margin": 0.02,
+    "maximum_scale_change_fraction": 0.35,
+    "maximum_landmark_jump_torso_lengths": 0.8,
+    "groups": {
+      "shoulders": ["left_shoulder", "right_shoulder"],
+      "elbows": ["left_elbow", "right_elbow"],
+      "wrists": ["left_wrist", "right_wrist"],
+      "hips": ["left_hip", "right_hip"],
+      "ankles": ["left_ankle", "right_ankle"],
+      "head_neck": ["nose", "left_ear", "right_ear"]
+    }
+  },
+  "smoothing": {"min_cutoff": 1.0, "beta": 0.02, "derivative_cutoff": 1.0},
+  "phase_segmentation": {
+    "candidates": {
+      "side": ["observable_elbow_angle", "bilateral_elbow_angle", "mid_shoulder_to_wrists"],
+      "front": ["bilateral_elbow_angle", "mid_shoulder_to_wrists", "mid_shoulder_vertical_to_wrists"],
+      "oblique": ["observable_elbow_angle", "bilateral_elbow_angle", "mid_shoulder_to_wrists", "mid_shoulder_vertical_to_wrists"],
+      "unknown": ["bilateral_elbow_angle", "mid_shoulder_to_wrists"]
+    },
+    "top_fraction": 0.65,
+    "threshold_quantiles": {"lower": 0.20, "upper": 0.80},
+    "bottom_fraction": 0.30,
+    "hysteresis_fraction": 0.08,
+    "minimum_repetition_duration_ms": 500,
+    "maximum_repetition_duration_ms": 6000,
+    "minimum_range": {"elbow_angle": 35.0, "normalized_distance": 0.12},
+    "minimum_valid_frame_fraction": 0.70,
+    "minimum_phase_dwell_ms": 80,
+    "maximum_pose_gap_ms": 250,
+    "minimum_signal_confidence": 0.55,
+    "maximum_normalized_roughness": 0.35,
+    "oblique_confidence_multiplier": 0.85,
+    "unknown_confidence_multiplier": 0.70
+  },
+  "camera_conditions": {
+    "minimum_valid_frame_fraction": 0.70,
+    "minimum_viewpoint_confidence": 0.60,
+    "oblique_minimum_viewpoint_confidence": 0.62,
+    "body_alignment": {"angle_deviation_deg": 8.0, "normalized_hip_displacement": 0.08, "minimum_persistence_fraction": 0.25, "minimum_persistence_ms": 250},
+    "depth_proxy": {"minimum_elbow_angle_deg": 110.0, "bottom_window_ms": 250, "minimum_bottom_samples": 2}
+  },
+  "viewpoint": {
+    "side_width_ratio_max": 0.32,
+    "front_width_ratio_min": 0.72,
+    "side_visibility_difference_min": 0.12,
+    "front_visibility_difference_max": 0.08,
+    "side_depth_difference_min": 0.10,
+    "front_depth_difference_max": 0.05,
+    "minimum_frame_confidence": 0.55,
+    "minimum_valid_frame_fraction": 0.35,
+    "aggregation_window_frames": 15,
+    "minimum_dwell_ms": 500,
+    "side_selection_minimum_margin": 0.05
+  },
+  "capability_matrix": {
+    "side": {"repetition_phase": "supported", "depth": "supported", "body_alignment": "supported", "elbow_flare": "unavailable", "left_right_visual_symmetry": "unavailable"},
+    "front": {"repetition_phase": "limited", "depth": "unavailable", "body_alignment": "unavailable", "elbow_flare": "limited", "left_right_visual_symmetry": "supported"},
+    "oblique": {"repetition_phase": "limited", "depth": "limited", "body_alignment": "limited", "elbow_flare": "limited", "left_right_visual_symmetry": "limited"},
+    "unknown": {"repetition_phase": "limited", "depth": "unavailable", "body_alignment": "unavailable", "elbow_flare": "unavailable", "left_right_visual_symmetry": "unavailable"}
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "minimum_pressure_coverage": 0.70,
+  "minimum_repetition_duration_ms": 500,
+  "maximum_saturation_fraction": 0.0,
+  "critical_quality_codes": ["saturated_raw_value", "stuck_signal", "invalid_calibration"],
+  "balance": {"imbalance_percent": 10.0, "minimum_persistence_fraction": 0.25, "minimum_persistence_ms": 250},
+  "hand_pressure_stability": {"enabled": true, "maximum_cop_displacement_cells": null},
+  "cue_priority": ["body_alignment_deviation", "push_up_depth_proxy", "left_right_pressure_balance"],
+  "cue_minimum_confidence": 0.60,
+  "cue_repeat_cooldown_repetitions": 2,
+  "repeat_condition_minimum_repetitions": 2
+}

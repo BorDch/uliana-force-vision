@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0",
+  "validation_status": "experimental-trainer-validation-pending",
+  "camera_conditions": {
+    "head_neck": {"maximum_normalized_deviation": 0.15, "minimum_persistence_fraction": 0.3, "minimum_persistence_ms": 200},
+    "elbow_flare": {"maximum_flare_angle_deg": 60.0, "minimum_persistence_fraction": 0.3, "minimum_persistence_ms": 200},
+    "hand_placement": {"maximum_wrist_offset": 0.3, "minimum_persistence_fraction": 0.3, "minimum_persistence_ms": 200}
+  }
+}

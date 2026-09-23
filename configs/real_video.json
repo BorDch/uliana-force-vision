@@ -1,0 +1,11 @@
+{
+  "camera_view": "side",
+  "min_required_landmark_quality": 0.65,
+  "min_rep_pose_coverage": 0.7,
+  "max_pose_gap_ms": 250,
+  "state_machine": {"up_angle_deg": 150, "down_angle_deg": 135, "hysteresis_deg": 5},
+  "thresholds": {"insufficient_depth_angle_deg": 110, "body_line_error_deg": 8, "persistence_ms": 250},
+  "side_selection": {"calibration_frames": 30, "minimum_margin": 0.05},
+  "simulated_force": {"left_force_n": 200.0, "right_force_n": 200.0},
+  "event_matching_tolerance_seconds": 0.5
+}

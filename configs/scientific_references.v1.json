@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "references": [
+    {
+      "id": "suprak-2013",
+      "citation": "Suprak et al.",
+      "doi": "10.4085/1062-6050-48.5.08",
+      "supports": "Shoulder and scapular kinematics as a movement-analysis topic; not an individual injury-risk assessment.",
+      "does_not_support": "A universal 45-degree safety rule or validation of ULIANA thresholds."
+    },
+    {
+      "id": "kassiano-2023",
+      "citation": "Kassiano et al.",
+      "doi": "10.1519/JSC.0000000000004415",
+      "supports": "Range of motion as a relevant exercise measurement topic.",
+      "does_not_support": "A chest-contact counting standard or validation of the 110-degree camera proxy."
+    },
+    {
+      "id": "donkers-1993",
+      "citation": "Donkers et al.",
+      "doi": "10.1016/0021-9290(93)90026-B",
+      "supports": "Hand position and elbow loading as biomechanical topics; how hand placement changes joint loading.",
+      "does_not_support": "Validation of ULIANA camera rules or a hand-placement classifier."
+    }
+  ]
+}

@@ -1,0 +1,207 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "uliana-push-up-camera-assessment",
+  "policy_version": "1.0.0",
+  "validation_status": "engineering-prototype-not-trainer-validated",
+  "criteria": {
+    "completed_movement_cycles": {
+      "plain_name": "Completed movement cycles",
+      "measurement_definition": "Complete top-bottom-top intervals emitted by the frozen phase segmentation pipeline.",
+      "supported_viewpoints": [
+        "side",
+        "oblique",
+        "front",
+        "unknown"
+      ],
+      "required_landmarks": "Selected phase signal landmarks",
+      "threshold_reference": "configs/video_processing.json#/phase_segmentation",
+      "quality_requirements": "A reliable selected phase signal and a complete configured cycle.",
+      "display": {
+        "available": "{count} complete repetitions detected.",
+        "unavailable": "A reliable repetition count was not available."
+      },
+      "limitation": "A completed movement cycle is not a certification of technique.",
+      "validation_status": "experimental-counting-rule-not-clinical-limit"
+    },
+    "body_alignment_deviation": {
+      "plain_name": "Body alignment",
+      "measurement_definition": "Visible shoulder-hip-ankle angular deviation and normalized perpendicular hip displacement.",
+      "supported_viewpoints": [
+        "side",
+        "oblique"
+      ],
+      "required_landmarks": [
+        "observable shoulder",
+        "observable hip",
+        "observable ankle"
+      ],
+      "threshold_reference": "configs/video_processing.json#/camera_conditions/body_alignment",
+      "persistence_requirements": "Angle > 8 degrees OR normalized displacement > 0.08, for >= 25% and >= 250 ms continuously.",
+      "display": {
+        "adequate": "No deviation detected in this check",
+        "condition_detected": "Review suggested",
+        "unavailable": "Not assessed"
+      },
+      "flagged_title": "Review body alignment in repetition {rep_id}.",
+      "flagged_explanation": "The visible shoulder-hip-ankle line deviated beyond the experimental threshold for a sustained part of this repetition.",
+      "action": "Replay the highlighted interval and review your body position.",
+      "unavailable_reasons": [
+        "viewpoint_not_supported",
+        "insufficient_valid_frames",
+        "required_landmarks_unavailable",
+        "phase_detection_unreliable"
+      ],
+      "evidence_references": [],
+      "validation_status": "experimental-engineering-rule-not-clinical-limit"
+    },
+    "push_up_depth_proxy": {
+      "plain_name": "Depth proxy",
+      "measurement_definition": "Minimum observable elbow angle in the configured +/-250 ms bottom window.",
+      "supported_viewpoints": [
+        "side",
+        "oblique"
+      ],
+      "required_landmarks": [
+        "observable shoulder",
+        "observable elbow",
+        "observable wrist"
+      ],
+      "threshold_reference": "configs/video_processing.json#/camera_conditions/depth_proxy",
+      "quality_requirements": "At least two bottom-window samples and condition-specific reliability gates.",
+      "comparison": "condition_detected when minimum elbow angle > 110 degrees",
+      "display": {
+        "adequate": "No deviation detected in this check",
+        "condition_detected": "Review suggested",
+        "unavailable": "Not assessed"
+      },
+      "flagged_title": "Review the depth of repetition {rep_id}.",
+      "flagged_explanation": "The observed elbow-angle proxy did not meet the current experimental depth criterion.",
+      "action": "Replay the bottom position. Ask a trainer to interpret the range of motion if you are unsure.",
+      "limitation": "This camera proxy does not establish chest-to-floor contact.",
+      "unavailable_reasons": [
+        "viewpoint_not_supported",
+        "insufficient_valid_frames",
+        "required_landmarks_unavailable",
+        "phase_detection_unreliable"
+      ],
+      "evidence_references": [
+        "kassiano-2023"
+      ],
+      "validation_status": "experimental-camera-proxy-not-contact-standard"
+    },
+    "head_neck_alignment": {
+      "plain_name": "Head/neck alignment",
+      "measurement_definition": "Signed perpendicular ear distance from the visible shoulder-hip line, normalized by pixel torso length.",
+      "supported_viewpoints": [
+        "side",
+        "oblique"
+      ],
+      "required_landmarks": [
+        "nose",
+        "left_ear or right_ear",
+        "shoulders",
+        "hips"
+      ],
+      "threshold_reference": "configs/video_processing.json#/camera_conditions/head_neck",
+      "quality_requirements": "Required landmarks pass visibility/presence gates in at least 70% of repetition frames; supported viewpoint, reliable phase and viewpoint confidence required.",
+      "comparison": "condition_detected when absolute normalized deviation > 0.15 for >= 30% and >= 200 ms continuously.",
+      "display": {
+        "adequate": "Head position within range",
+        "condition_detected": "Review head position",
+        "unavailable": "Not assessed"
+      },
+      "flagged_title": "Review head and neck position in repetition {rep_id}.",
+      "flagged_explanation": "The head was not aligned with the spine for a sustained part of this repetition.",
+      "action": "Review the side-view recording and keep your head approximately in line with your torso.",
+      "limitation": "Head position estimated from 2D landmarks; exact cervical spine angle not measured.",
+      "unavailable_reasons": [
+        "required_landmarks_unavailable",
+        "insufficient_valid_frames",
+        "phase_detection_unreliable"
+      ],
+      "evidence_references": [],
+      "validation_status": "experimental-engineering-rule-not-clinical-limit"
+    },
+    "elbow_to_torso_flare": {
+      "plain_name": "Elbow-to-torso flare",
+      "measurement_definition": "Projected angle between upper arm and shoulder-midpoint to hip-midpoint vector in pixel coordinates.",
+      "supported_viewpoints": [
+        "front",
+        "oblique"
+      ],
+      "required_landmarks": [
+        "left_shoulder",
+        "right_shoulder",
+        "left_elbow",
+        "right_elbow",
+        "hips"
+      ],
+      "threshold_reference": "configs/video_processing.json#/camera_conditions/elbow_flare",
+      "quality_requirements": "Required landmarks pass visibility/presence gates in at least 70% of repetition frames; supported viewpoint, reliable phase and viewpoint confidence required.",
+      "comparison": "condition_detected when projected flare angle > 60 degrees for >= 30% and >= 200 ms continuously.",
+      "display": {
+        "adequate": "Elbow position within range",
+        "condition_detected": "Review elbow position",
+        "unavailable": "Not assessed"
+      },
+      "flagged_title": "Review elbow position in repetition {rep_id}.",
+      "flagged_explanation": "The projected upper-arm/torso angle exceeded the experimental threshold for a sustained interval.",
+      "action": "Tuck your elbows closer to your body - aim for approximately 45 degrees from your torso, not flared out to 90 degrees.",
+      "limitation": "Camera-based flare estimation from oblique view is approximate; exact 3D joint angles not measured.",
+      "unavailable_reasons": [
+        "viewpoint_not_supported",
+        "required_landmarks_unavailable",
+        "insufficient_valid_frames",
+        "phase_detection_unreliable"
+      ],
+      "evidence_references": [
+        "suprak-2013"
+      ],
+      "validation_status": "experimental-engineering-rule-not-clinical-limit"
+    },
+    "hand_placement": {
+      "plain_name": "Hand placement",
+      "measurement_definition": "Each wrist X offset from its corresponding shoulder, normalized by projected shoulder width; zero means laterally aligned.",
+      "supported_viewpoints": [
+        "front",
+        "oblique"
+      ],
+      "required_landmarks": [
+        "left_wrist",
+        "right_wrist",
+        "left_shoulder",
+        "right_shoulder"
+      ],
+      "threshold_reference": "configs/video_processing.json#/camera_conditions/hand_placement",
+      "quality_requirements": "Required landmarks pass visibility/presence gates in at least 70% of repetition frames; supported viewpoint, reliable phase and viewpoint confidence required.",
+      "comparison": "condition_detected when absolute wrist offset > 0.3 shoulder-widths for >= 30% and >= 200 ms continuously.",
+      "display": {
+        "adequate": "Hand position within range",
+        "condition_detected": "Review hand position",
+        "unavailable": "Not assessed"
+      },
+      "flagged_title": "Review hand position in repetition {rep_id}.",
+      "flagged_explanation": "Your hands were positioned too far from under your shoulders for a sustained part of this repetition.",
+      "action": "Place your hands approximately under your shoulders - not too wide, not too narrow.",
+      "unavailable_reasons": [
+        "viewpoint_not_supported",
+        "required_landmarks_unavailable",
+        "insufficient_valid_frames",
+        "phase_detection_unreliable"
+      ],
+      "evidence_references": [
+        "donkers-1993"
+      ],
+      "validation_status": "experimental-engineering-rule-not-clinical-limit",
+      "limitation": "Experimental 2D lateral placement proxy only; does not measure forward/back placement, palm contact, or force. Keep the camera level; perspective affects this measurement."
+    }
+  },
+  "unsupported_criteria": [
+    {
+      "criterion_id": "pressure_distribution",
+      "label": "Pressure distribution",
+      "reason": "Requires calibrated smart-mat sensing-element data."
+    }
+  ],
+  "coverage_definition": "Answered body-alignment, depth-proxy, head-neck, elbow-flare and hand-placement assessments divided by those eligible assessments emitted for detected repetitions."
+}
