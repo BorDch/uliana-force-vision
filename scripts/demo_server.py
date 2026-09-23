@@ -25,6 +25,7 @@ from uliana.reporting.research_preview import build_research_preview
 from uliana.reporting.coach_summary import build_coach_facts, coach_summary, configured_provider
 from uliana.video.processing import observation_from_dict
 from scripts.mobile_auth import MobileStore, request_is_secure
+from scripts.hand_width import camera_measurement, classify_hand_width, sensor_hand_width_cm
 from scripts.review_overlay import review_moments
 from scripts.tts_service import synthesize_wav
 
@@ -90,6 +91,9 @@ class PairingBody(BaseModel):
     device_id: str = Field(min_length=3, max_length=64)
     workout_session_id: str | None = None
 
+class ShoulderCalibrationBody(BaseModel):
+    shoulder_width_norm: float | None = None
+
 class SensorChannel(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     channel_id: str = Field(pattern=r"^[A-Za-z0-9_.-]{1,32}$")
@@ -102,11 +106,20 @@ class TelemetryBody(BaseModel):
     sequence: int = Field(ge=0, le=2147483647)
     device_time_ms: int = Field(ge=0, le=9223372036854775807)
     channels: list[SensorChannel] = Field(min_length=16, max_length=16)
+    baseline: dict[str, int] | None = None
     workout_session_id: str | None = None
 
 def mobile_user(request: Request, csrf: bool = False):
     if MOBILE is None: raise HTTPException(404, "Not found")
     return MOBILE.current_user(request, csrf=csrf)
+
+@app.post("/api/profile/calibrate-shoulders")
+def calibrate_shoulders(body: ShoulderCalibrationBody, request: Request) -> dict:
+    user = mobile_user(request, csrf=True)
+    if body.shoulder_width_norm is None or not 0 < body.shoulder_width_norm <= 1:
+        raise HTTPException(400, "shoulder_width_norm must be between 0 and 1.")
+    saved = MOBILE.save_shoulder_calibration(user["id"], body.shoulder_width_norm)
+    return {"shoulder_width_cm": saved["shoulder_width_cm"], "saved": True}
 
 @app.post("/api/tts/synthesize")
 def tts_synthesize(body: TTSBody, request: Request):
@@ -172,14 +185,77 @@ async def ingest_sensor_telemetry(request: Request) -> dict:
     if body.schema_version != 1: raise HTTPException(400, "Unsupported telemetry schema version.")
     if {item.channel_id for item in body.channels} != {f"channel_{i}" for i in range(16)}:
         raise HTTPException(400, "Exactly channel_0 through channel_15 are required.")
+    if body.baseline is not None and set(body.baseline) != {f"channel_{i}" for i in range(16)}:
+        raise HTTPException(400, "Baseline must include channel_0 through channel_15.")
     if not hmac.compare_digest(pairing["device_id"], body.device_id): raise HTTPException(403, "Device does not match this pairing.")
     MOBILE.rate_limit(f"ingest:{pairing['id']}", limit=240, window=60)
-    return MOBILE.store_sensor_sample(pairing, body.sequence, body.device_time_ms, [item.model_dump() for item in body.channels], body.workout_session_id)
+    return MOBILE.store_sensor_sample(pairing, body.sequence, body.device_time_ms, [item.model_dump() for item in body.channels], body.workout_session_id, body.baseline)
 
 def owned_folder(request: Request, session_id: str, csrf: bool = False) -> Path:
     if MOBILE is None: return folder(session_id)
     user = mobile_user(request, csrf=csrf)
     return MOBILE.workout(session_id, user["id"])[1]
+
+@app.get("/api/sessions/{session_id}/hand-width")
+def hand_width_for_session(session_id: str, request: Request) -> dict:
+    target = owned_folder(request, session_id)
+    user = mobile_user(request) if MOBILE is not None else None
+    calibration = MOBILE.shoulder_calibration(user["id"]) if MOBILE is not None else None
+    shoulder_width_cm = float(calibration["shoulder_width_cm"]) if calibration else 40.0
+    preferred_timestamp = _preferred_review_timestamp(target)
+    camera = camera_measurement(target / "analysis" / "video_observations.jsonl", preferred_timestamp)
+    device = None
+    if MOBILE is not None:
+        device = next(
+            (item for item in MOBILE.sensor_status(user["id"])
+             if item.get("workout_session_id") == session_id),
+            None,
+        )
+    sensor_width = sensor_hand_width_cm(device)
+    response = {
+        "session_id": session_id,
+        "shoulder_width_cm": shoulder_width_cm,
+        "hand_width_cm": None,
+        "deviation_cm": None,
+        "classification": None,
+        "recommendation": None,
+        "source": "camera",
+        "sensor_hand_width_cm": sensor_width,
+        "sensor_camera_agree": None,
+        "calibration_used": calibration is not None,
+        "expected_shoulders": camera["expected_shoulders"] if camera else None,
+    }
+    if camera is None:
+        return response
+    reference_norm = calibration.get("shoulder_width_norm") if calibration else camera["shoulder_width_norm"]
+    if not isinstance(reference_norm, (int, float)) or reference_norm <= 0:
+        return response
+    measured = round(camera["hand_width_norm"] / reference_norm * shoulder_width_cm, 1)
+    deviation = round(measured - shoulder_width_cm, 1)
+    classification, recommendation = classify_hand_width(deviation)
+    response.update({
+        "hand_width_cm": measured,
+        "deviation_cm": deviation,
+        "classification": classification,
+        "recommendation": recommendation,
+        "sensor_camera_agree": abs(sensor_width - measured) <= 5 if sensor_width is not None else None,
+    })
+    return response
+
+
+def _preferred_review_timestamp(target: Path) -> int | None:
+    moments = review_moments(target).get("moments", [])
+    if moments:
+        value = moments[0].get("timestamp_ms")
+        if isinstance(value, int):
+            return value
+    result_path = target / "analysis" / "session_result.json"
+    if result_path.is_file():
+        result = json.loads(result_path.read_text(encoding="utf-8"))
+        intervals = result.get("repetition_intervals") or []
+        if intervals and isinstance(intervals[0].get("bottom_ms"), int):
+            return intervals[0]["bottom_ms"]
+    return None
 
 @app.post("/api/auth/register", status_code=201)
 def register(body: RegisterBody, request: Request, response: Response) -> dict:

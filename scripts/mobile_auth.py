@@ -90,9 +90,16 @@ class MobileStore:
             if "sequence_offset" not in columns:
                 db.execute("ALTER TABLE sensor_pairings ADD COLUMN sequence_offset INTEGER NOT NULL DEFAULT 0")
             sample_columns = {row[1] for row in db.execute("PRAGMA table_info(sensor_samples)")}
+            if "baseline_json" not in sample_columns:
+                db.execute("ALTER TABLE sensor_samples ADD COLUMN baseline_json TEXT")
             if "device_sequence" not in sample_columns:
                 db.execute("ALTER TABLE sensor_samples ADD COLUMN device_sequence INTEGER")
                 db.execute("UPDATE sensor_samples SET device_sequence=sequence")
+            user_columns = {row[1] for row in db.execute("PRAGMA table_info(users)")}
+            if "shoulder_width_norm" not in user_columns:
+                db.execute("ALTER TABLE users ADD COLUMN shoulder_width_norm REAL")
+            if "shoulder_width_cm" not in user_columns:
+                db.execute("ALTER TABLE users ADD COLUMN shoulder_width_cm REAL")
 
     @staticmethod
     def password_hash(password: str) -> str:
@@ -130,7 +137,10 @@ class MobileStore:
         user_id, now = str(uuid.uuid4()), datetime.now(timezone.utc).isoformat()
         try:
             with self.connect() as db:
-                db.execute("INSERT INTO users VALUES (?,?,?,?,?)", (user_id, username, username.casefold(), self.password_hash(password), now))
+                db.execute(
+                    "INSERT INTO users(id,username,username_key,password_hash,created_at) VALUES (?,?,?,?,?)",
+                    (user_id, username, username.casefold(), self.password_hash(password), now),
+                )
                 return db.execute("SELECT id,username FROM users WHERE id=?", (user_id,)).fetchone()
         except sqlite3.IntegrityError as exc:
             raise HTTPException(409, "That username is already in use.") from exc
@@ -141,6 +151,26 @@ class MobileStore:
         if not user or not self.password_ok(password, user["password_hash"]):
             raise HTTPException(401, "Incorrect username or password.")
         return user
+
+    def save_shoulder_calibration(self, user_id: str, shoulder_width_norm: float) -> dict:
+        shoulder_width_cm = round(shoulder_width_norm * 100, 1)
+        with self.connect() as db:
+            changed = db.execute(
+                "UPDATE users SET shoulder_width_norm=?,shoulder_width_cm=? WHERE id=?",
+                (shoulder_width_norm, shoulder_width_cm, user_id),
+            ).rowcount
+        if not changed:
+            raise HTTPException(404, "User not found")
+        return {"shoulder_width_norm": shoulder_width_norm, "shoulder_width_cm": shoulder_width_cm}
+
+    def shoulder_calibration(self, user_id: str) -> dict | None:
+        with self.connect() as db:
+            row = db.execute(
+                "SELECT shoulder_width_norm,shoulder_width_cm FROM users WHERE id=?", (user_id,)
+            ).fetchone()
+        if not row or row["shoulder_width_cm"] is None:
+            return None
+        return {"shoulder_width_norm": row["shoulder_width_norm"], "shoulder_width_cm": row["shoulder_width_cm"]}
 
     @staticmethod
     def digest(value: str) -> str:
@@ -265,32 +295,57 @@ class MobileStore:
             raise HTTPException(401, "Pairing token is invalid or expired.")
         return row
 
-    def store_sensor_sample(self, pairing: sqlite3.Row, sequence: int, device_time_ms: int, channels: list[dict], workout_id: str | None) -> dict:
+    def store_sensor_sample(self, pairing: sqlite3.Row, sequence: int, device_time_ms: int, channels: list[dict], workout_id: str | None, baseline: dict[str, int] | None = None) -> dict:
         workout_id = workout_id or pairing["workout_id"]
         if workout_id: self.workout(workout_id, pairing["user_id"])
         received = datetime.now(timezone.utc).isoformat()
+        channels_json = json.dumps(channels, separators=(",", ":"))
+        baseline_json = json.dumps(baseline, separators=(",", ":")) if baseline is not None else None
         with self.connect() as db:
-            prior = db.execute("SELECT MAX(device_sequence) FROM sensor_samples WHERE pairing_id=? AND sequence>?",
-                               (pairing["id"], pairing["sequence_offset"])).fetchone()[0]
-            if prior is not None and sequence <= prior: raise HTTPException(409, "Sequence must increase.")
+            db.execute("BEGIN IMMEDIATE")
+            previous = db.execute("""SELECT sequence,device_sequence,device_time_ms,channels_json,baseline_json,received_at
+                                   FROM sensor_samples WHERE pairing_id=? AND sequence>?
+                                   ORDER BY sequence DESC LIMIT 1""",
+                                  (pairing["id"], pairing["sequence_offset"])).fetchone()
+            duplicate = db.execute("""SELECT received_at FROM sensor_samples
+                                    WHERE pairing_id=? AND sequence>? AND device_sequence=? AND device_time_ms=?
+                                      AND channels_json=? AND baseline_json IS ? LIMIT 1""",
+                                   (pairing["id"], pairing["sequence_offset"], sequence, device_time_ms,
+                                    channels_json, baseline_json)).fetchone()
+            if duplicate:
+                return {"accepted": True, "duplicate": True, "sequence": sequence,
+                        "missing_sequences": 0, "received_at": duplicate["received_at"]}
+            prior = previous["device_sequence"] if previous else None
             missing = max(0, sequence - prior - 1) if prior is not None else 0
-            db.execute("INSERT INTO sensor_samples(pairing_id,user_id,workout_id,device_id,sequence,device_sequence,device_time_ms,channels_json,received_at,missing_before) VALUES(?,?,?,?,?,?,?,?,?,?)",
-                       (pairing["id"], pairing["user_id"], workout_id, pairing["device_id"], pairing["sequence_offset"] + sequence, sequence, device_time_ms, json.dumps(channels, separators=(",", ":")), received, missing))
+            sample_sequence = (previous["sequence"] + 1 if previous else pairing["sequence_offset"] + 1)
+            db.execute("INSERT INTO sensor_samples(pairing_id,user_id,workout_id,device_id,sequence,device_sequence,device_time_ms,channels_json,baseline_json,received_at,missing_before) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                       (pairing["id"], pairing["user_id"], workout_id, pairing["device_id"], sample_sequence, sequence, device_time_ms, channels_json, baseline_json, received, missing))
             db.execute("UPDATE sensor_pairings SET last_seen_at=? WHERE id=?", (received, pairing["id"]))
-        return {"accepted": True, "sequence": sequence, "missing_sequences": missing, "received_at": received}
+        return {"accepted": True, "duplicate": False, "sequence": sequence,
+                "out_of_order": prior is not None and sequence <= prior,
+                "missing_sequences": missing, "received_at": received}
 
     def sensor_status(self, user_id: str) -> list[dict]:
         with self.connect() as db:
             rows = db.execute("""SELECT p.id,p.device_id,p.workout_id,p.expires_at,p.revoked_at,p.last_seen_at,
               (SELECT device_sequence FROM sensor_samples s WHERE s.pairing_id=p.id AND s.sequence>p.sequence_offset ORDER BY sequence DESC LIMIT 1) last_sequence,
-              (SELECT channels_json FROM sensor_samples s WHERE s.pairing_id=p.id AND s.sequence>p.sequence_offset ORDER BY sequence DESC LIMIT 1) channels_json
+              (SELECT sequence FROM sensor_samples s WHERE s.pairing_id=p.id AND s.sequence>p.sequence_offset ORDER BY sequence DESC LIMIT 1) sample_sequence,
+              (SELECT channels_json FROM sensor_samples s WHERE s.pairing_id=p.id AND s.sequence>p.sequence_offset ORDER BY sequence DESC LIMIT 1) channels_json,
+              (SELECT baseline_json FROM sensor_samples s WHERE s.pairing_id=p.id AND s.sequence>p.sequence_offset ORDER BY sequence DESC LIMIT 1) baseline_json,
+              (SELECT received_at FROM sensor_samples s WHERE s.pairing_id=p.id AND s.sequence>p.sequence_offset ORDER BY sequence DESC LIMIT 1) received_at
               FROM sensor_pairings p WHERE p.user_id=? ORDER BY p.created_at DESC""", (user_id,)).fetchall()
         now = datetime.now(timezone.utc)
         output=[]
         for row in rows:
             age = (now - datetime.fromisoformat(row["last_seen_at"])).total_seconds() if row["last_seen_at"] else None
             state = "Not connected" if row["revoked_at"] or row["expires_at"] < int(time.time()) else "Paired" if age is None else "Receiving data" if age <= 60 else "Connection lost"
-            output.append({"pairing_id":row["id"],"device_id":row["device_id"],"workout_session_id":row["workout_id"],"state":state,"last_seen_at":row["last_seen_at"],"last_sequence":row["last_sequence"],"channels":json.loads(row["channels_json"]) if row["channels_json"] else []})
+            baseline = json.loads(row["baseline_json"]) if row["baseline_json"] else None
+            channels = json.loads(row["channels_json"]) if row["channels_json"] else []
+            for channel in channels:
+                reference = baseline.get(channel["channel_id"]) if baseline is not None else None
+                channel["delta"] = abs(channel["raw_value"] - reference) if reference is not None else None
+                channel["hand"] = channel["delta"] > 60 if channel["delta"] is not None else False
+            output.append({"sequence":row["last_sequence"] or 0,"sample_sequence":row["sample_sequence"],"received_at":row["received_at"],"baseline":baseline,"pairing_id":row["id"],"device_id":row["device_id"],"workout_session_id":row["workout_id"],"state":state,"last_seen_at":row["last_seen_at"],"last_sequence":row["last_sequence"],"channels":channels})
         return output
 
 
